@@ -10,7 +10,7 @@ def cleanString(string):
 
 # Get information about the data
 
-def returnCsvInfo(fileObj):
+def getDataInfo(fileObj):
 	
 	# Start with using messytable for headers and types
 
@@ -19,6 +19,8 @@ def returnCsvInfo(fileObj):
 
 	f = open(fileObj, 'rb')
 	table_set = mt.CSVTableSet(f)
+	
+
 	table_set.window = n
 
 	row_set = table_set.tables[0]
@@ -42,8 +44,7 @@ def returnCsvInfo(fileObj):
 			dateSample = []
 			for row in row_set.sample:
 				dateSample.append(row[colIndex].value)
-			dateGuess = dateinfer.infer(dateSample)
-			print dateGuess
+			dateGuess = dateinfer.infer(dateSample).replace("%M","%y")  # hack to stop years showing as minutes
 			
 			# For single days, months and years	
 
@@ -55,7 +56,40 @@ def returnCsvInfo(fileObj):
 			else:
 				types[colIndex] = "Date({dateGuess})".format(dateGuess=dateGuess)
 
+	f.close()
 	return {"offset":offset,"headers":headers,"types":types}
 
+def analyseData(fileObj):
+
+	# Get the headers and more detailed information about column types
+
+	fileInfo = getDataInfo(fileObj)
+
+	# Work out which ones are columns with a proper date
+
+	dateColumns = []
+
+	for i, colType in enumerate(fileInfo['types']):
+		if "Date" in str(colType):
+			dateColumns.append(i)
+
+	print dateColumns		
+	print fileInfo['types']
+
+	# Read the CSV into a pandas dataframe
+
+	df = pd.read_csv(fileObj)
+
+	# Parse any dates in place that need to be parsed
+
+	if dateColumns:
+		for i in dateColumns:
+			dateFormat = str(fileInfo['types'][i]).split("(")[1].split(")")[0]
+			print dateFormat
+			df[df.columns[i]] = pd.to_datetime(df[df.columns[i]], format=dateFormat) 
+
+	print df[:10]		
+
 # Testing locally
-print returnCsvInfo(os.path.dirname(os.getcwd()) + '/testdata/date-test.csv')
+
+analyseData(os.path.dirname(os.getcwd()) + '/testdata/date-test.csv')
