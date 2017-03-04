@@ -2,6 +2,7 @@ import pandas as pd
 import messytables as mt
 import dateinfer
 import os
+from datetime import datetime
 
 # Helper function for strings
 
@@ -36,7 +37,7 @@ def getDataInfo(fileObj):
 
 	for i, header in enumerate(headers):
 		for dateString in dateHeaders:
-			if dateString in cleanString(header):
+			if dateString == cleanString(header):
 				possibleDates.append(i)
 				
 	if possibleDates:
@@ -57,9 +58,28 @@ def getDataInfo(fileObj):
 				types[colIndex] = "Date({dateGuess})".format(dateGuess=dateGuess)
 
 	f.close()
-	return {"offset":offset,"headers":headers,"types":types}
 
-def analyseData(fileObj):
+	# Check for day, month, year cols and get positions
+
+	dayPos = None 
+	monthPos = None
+	yearPos = None
+
+	for i, headerType in enumerate(types):
+		if 'Day' in str(headerType):
+			dayPos = i
+
+	for i, headerType in enumerate(types):
+		if 'Month' in str(headerType):
+			monthPos = i
+			
+	for i, headerType in enumerate(types):
+		if 'Year' in str(headerType):
+			yearPos = i		
+
+	return {"offset":offset,"headers":headers,"types":types,"splitDates":[dayPos,monthPos,yearPos]}
+
+def makeDataFrame(fileObj):
 
 	# Get the headers and more detailed information about column types
 
@@ -73,7 +93,7 @@ def analyseData(fileObj):
 		if "Date" in str(colType):
 			dateColumns.append(i)
 
-	print dateColumns		
+	# print dateColumns		
 	print fileInfo['types']
 
 	# Read the CSV into a pandas dataframe
@@ -88,8 +108,39 @@ def analyseData(fileObj):
 			print dateFormat
 			df[df.columns[i]] = pd.to_datetime(df[df.columns[i]], format=dateFormat) 
 
-	print df[:10]		
+	# print df[:10]		
+
+	# check if there is day, month, year in seperate columns and parse if so
+
+	print fileInfo['splitDates']
+
+	if fileInfo['splitDates'][0] and fileInfo['splitDates'][1] and fileInfo['splitDates'][2]:
+
+		dateFormat = str(fileInfo['types'][fileInfo['splitDates'][0]]).split("(")[1].split(")")[0] + str(fileInfo['types'][fileInfo['splitDates'][1]]).split("(")[1].split(")")[0] + str(fileInfo['types'][fileInfo['splitDates'][2]]).split("(")[1].split(")")[0]
+		
+		print dateFormat
+
+		dayHeader = list(df)[fileInfo['splitDates'][0]]
+		monthHeader = list(df)[fileInfo['splitDates'][1]]
+		yearHeader = list(df)[fileInfo['splitDates'][2]]
+
+		# print df[df.columns[fileInfo['splitDates'][0]]]
+
+		df['newDate'] = df.apply(lambda row :
+                          datetime.strptime(str(row[dayHeader]) + str(row[monthHeader]) + str(row[yearHeader]), dateFormat).isoformat(' '), 
+                          axis=1)
+
+		# df['newDate'] = pd.to_datetime(df[df.columns[fileInfo['splitDates'][0]]] + df[df.columns[fileInfo['splitDates'][1]]] + df[df.columns[fileInfo['splitDates'][2]]], format=dateFormat)
+
+
+	 # and any('Month' in str(header) for header in fileInfo['types']) and any('Year' in str(header) for header in fileInfo['types']):
+
+	print df[:10] 
+
+# def autoAnalyser(fileObj):
+
+
 
 # Testing locally
 
-analyseData(os.path.dirname(os.getcwd()) + '/testdata/date-test.csv')
+makeDataFrame(os.path.dirname(os.getcwd()) + '/testdata/date-test.csv')
