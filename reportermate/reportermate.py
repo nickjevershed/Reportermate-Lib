@@ -16,14 +16,11 @@ def getDataInfo(fileObj):
 	# Start with using messytable for headers and types
 
 	# Sample size for type detection
+	
 	n = 100
-
 	f = open(fileObj, 'rb')
 	table_set = mt.CSVTableSet(f)
-	
-
 	table_set.window = n
-
 	row_set = table_set.tables[0]
 	offset, headers = mt.headers_guess(row_set.sample)
 	row_set.register_processor(mt.offset_processor(offset + 1))
@@ -108,8 +105,6 @@ def makeDataFrame(fileObj):
 			print dateFormat
 			df[df.columns[i]] = pd.to_datetime(df[df.columns[i]], format=dateFormat) 
 
-	# print df[:10]		
-
 	# check if there is day, month, year in seperate columns and parse if so
 
 	print fileInfo['splitDates']
@@ -124,20 +119,29 @@ def makeDataFrame(fileObj):
 		monthHeader = list(df)[fileInfo['splitDates'][1]]
 		yearHeader = list(df)[fileInfo['splitDates'][2]]
 
-		# print df[df.columns[fileInfo['splitDates'][0]]]
-
 		df['newDate'] = df.apply(lambda row :
                           datetime.strptime(str(row[dayHeader]) + str(row[monthHeader]) + str(row[yearHeader]), dateFormat).isoformat(' '), 
                           axis=1)
 
-		# df['newDate'] = pd.to_datetime(df[df.columns[fileInfo['splitDates'][0]]] + df[df.columns[fileInfo['splitDates'][1]]] + df[df.columns[fileInfo['splitDates'][2]]], format=dateFormat)
-
-
-	 # and any('Month' in str(header) for header in fileInfo['types']) and any('Year' in str(header) for header in fileInfo['types']):
-
-	print df[:10] 
+	return df	
 
 # def autoAnalyser(fileObj):
+
+
+# all of the pandas helper functions
+
+# get maximum of a column
+
+def getMax(df,col):
+	
+# get minimum of a column
+
+# get the top X of a column
+
+# get the average of a column
+
+
+
 
 
 
