@@ -1,0 +1,7 @@
+<p>Australia's unemployment rate has {{ increased to | decreased to | stayed steady at }} {{if increase}} {{rate most recent}}.</p>
+
+<p>This is {{above | below | steady 12 month average}} the 12 month average.</p>
+
+<p>The total number of people with jobs {{increased to | decreased to | stayed steady at}}  {{total jobs}}, according to the {{data source}}.</p>
+
+<p>Full-time employment {{ increased | decreased | steady }}, while part time employment {{ increased | decreased | steady }}.</p>
