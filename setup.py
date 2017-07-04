@@ -1,4 +1,8 @@
+import os
 from setuptools import setup
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
+
 
 setup(name='reportermate',
       version='0.1',
@@ -16,7 +20,5 @@ setup(name='reportermate',
       author_email='nick.evershed@gmail.com',
       license='MIT',
       packages=['reportermate'],
-      install_requires=[
-          'pandas','messytables',
-      ],
+      install_requires=required,
       zip_safe=False)
