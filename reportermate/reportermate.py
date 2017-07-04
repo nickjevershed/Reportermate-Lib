@@ -3,6 +3,7 @@ import messytables as mt
 import dateinfer
 import os
 from datetime import datetime
+from pybars import Compiler
 
 # Helper function for strings
 
@@ -36,16 +37,31 @@ def getDataInfo(fileObj):
 		for dateString in dateHeaders:
 			if dateString == cleanString(header):
 				possibleDates.append(i)
-				
+		
 	if possibleDates:
+		hyphenReplace = False
 		for colIndex in possibleDates:
 			dateSample = []
 			for row in row_set.sample:
-				dateSample.append(row[colIndex].value)
+				
+				# Work around because dateinfer breaks on dates like Jul-1976 and I don't know why 
+
+				if "-" in row[colIndex].value:
+					hyphenReplace = True
+					dateSample.append(row[colIndex].value.replace("-","/"))
+				else:	
+					dateSample.append(row[colIndex].value)	
+			print dateSample
 			dateGuess = dateinfer.infer(dateSample).replace("%M","%y")  # hack to stop years showing as minutes
 			
 			# For single days, months and years	
-
+			print dateGuess
+			
+			# Work around because dateinfer breaks on dates like Jul-1976 and I don't know why 
+			
+			if hyphenReplace:
+				dateGuess = dateGuess.replace("/","-")
+			
 			if len(dateGuess) <= 3:
 				types[colIndex] = "{dateMatch}({dateGuess})".format(dateMatch=dateMatches[dateGuess],dateGuess=dateGuess)
 
@@ -111,7 +127,7 @@ def makeDataFrame(fileObj):
 
 	if fileInfo['splitDates'][0] and fileInfo['splitDates'][1] and fileInfo['splitDates'][2]:
 
-		dateFormat = str(fileInfo['types'][fileInfo['splitDates'][0]]).split("(")[1].split(")")[0] + str(fileInfo['types'][fileInfo['splitDates'][1]]).split("(")[1].split(")")[0] + str(fileInfo['types'][fileInfo['splitDates'][2]]).split("(")[1].split(")")[0]
+		dateFormat = str(fileInfo['types'][fileInfo['splitDates'][0]]).split("(")[1].split(")")[0] + "-" + str(fileInfo['types'][fileInfo['splitDates'][1]]).split("(")[1].split(")")[0] + "-" + str(fileInfo['types'][fileInfo['splitDates'][2]]).split("(")[1].split(")")[0]
 		
 		print dateFormat
 
@@ -120,10 +136,23 @@ def makeDataFrame(fileObj):
 		yearHeader = list(df)[fileInfo['splitDates'][2]]
 
 		df['newDate'] = df.apply(lambda row :
-                          datetime.strptime(str(row[dayHeader]) + str(row[monthHeader]) + str(row[yearHeader]), dateFormat).isoformat(' '), 
+                          datetime.strptime(str(row[dayHeader]) + "-" + str(row[monthHeader]) + "-" + str(row[yearHeader]), dateFormat).isoformat(' '), 
                           axis=1)
 
 	return df	
+
+def analyseAndRender(dataLocation,templateLocation):
+	compiler = Compiler()
+	df = makeDataFrame(os.path.dirname(os.getcwd()) + dataLocation)
+	print df[:10]
+	# with open(os.path.dirname(os.getcwd()) + templateLocation) as tempSource:
+	# 	template = compiler.compile(tempSource)
+
+
+# pick a column from a dataframe, check if it has increased, decreased or stayed steady
+
+def checkMovement(col,df):
+	print ""
 
 # def autoAnalyser(fileObj):
 
@@ -132,7 +161,7 @@ def makeDataFrame(fileObj):
 
 # get maximum of a column
 
-def getMax(df,col):
+# def getMax(df,col):
 	
 # get minimum of a column
 
@@ -141,10 +170,8 @@ def getMax(df,col):
 # get the average of a column
 
 
-
-
-
-
 # Testing locally
 
-makeDataFrame(os.path.dirname(os.getcwd()) + '/testdata/date-test.csv')
+analyseAndRender('/testdata/Labor force demo data.csv','/testdata/unemployment-template.txt')
+
+# 
