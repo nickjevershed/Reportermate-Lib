@@ -19,6 +19,9 @@ setup(name='reportermate',
       author='Nick Evershed',
       author_email='nick.evershed@gmail.com',
       license='MIT',
+      entry_points = {
+        "console_scripts":['reportermate = reportermate.command_line:main']
+        },
       packages=['reportermate'],
       install_requires=['pandas','pybars3','messytables','dateinfer'],
       zip_safe=False)

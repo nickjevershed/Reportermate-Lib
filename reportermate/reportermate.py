@@ -141,9 +141,9 @@ def _makeDataFrame(fileObj):
 
 def analyseAndRender(dataLocation,templateLocation):
 	
-	df = _makeDataFrame(os.path.dirname(os.getcwd()) + dataLocation)
+	df = _makeDataFrame(dataLocation)
 
-	with io.open(os.path.dirname(os.getcwd()) + templateLocation, 'r', encoding='utf-8') as tempSource:
+	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
 		compiler = Compiler()
 		template = compiler.compile(tempSource.read())
 
@@ -155,4 +155,4 @@ def analyseAndRender(dataLocation,templateLocation):
 
 # Testing locally
 
-analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')
+# analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')
