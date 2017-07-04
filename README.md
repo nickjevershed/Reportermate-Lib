@@ -19,11 +19,11 @@ Installing the reportermate lib adds the reportermate function to your command l
 reportermate my-data.csv my-template.txt
 ````
 
-Using this function will take your data and render and analyse it according to the template provided.
+Using this function will take your data and then analyse and render it according to the template provided.
 
 To use reportermate from within another python script, import the analyseAndRender function:
 
-````
+````Python
 from reportermate import analyseAndRender
 analyseAndRender(my-data.csv,my-template.txt)
 ````
@@ -31,7 +31,9 @@ analyseAndRender(my-data.csv,my-template.txt)
 Templates
 -----------
 
-Reportermate uses the handlebars template language to define the analysis of the dataset, and how the results should be rendered into text.
+Reportermate uses the handlebars template language to define the analysis of the dataset, and how the results should be rendered into text. The template functions are the key to generating your text results.
+
+*Template function definitions and examples coming soon...*
 
 
 
