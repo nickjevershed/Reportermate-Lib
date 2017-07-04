@@ -1,18 +1,22 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import messytables as mt
 import dateinfer
 import os
 from datetime import datetime
 from pybars import Compiler
+import io
+import helpers as hlp
 
 # Helper function for strings
 
-def cleanString(string):
+def _cleanString(string):
 	return string.lower().strip()
 
 # Get information about the data
 
-def getDataInfo(fileObj):
+def _getDataInfo(fileObj):
 	
 	# Start with using messytable for headers and types
 
@@ -35,7 +39,7 @@ def getDataInfo(fileObj):
 
 	for i, header in enumerate(headers):
 		for dateString in dateHeaders:
-			if dateString == cleanString(header):
+			if dateString == _cleanString(header):
 				possibleDates.append(i)
 		
 	if possibleDates:
@@ -51,14 +55,14 @@ def getDataInfo(fileObj):
 					dateSample.append(row[colIndex].value.replace("-","/"))
 				else:	
 					dateSample.append(row[colIndex].value)	
-			print dateSample
+			# print dateSample
 			dateGuess = dateinfer.infer(dateSample).replace("%M","%y")  # hack to stop years showing as minutes
 			
 			# For single days, months and years	
-			print dateGuess
+			# print dateGuess
 			
 			# Work around because dateinfer breaks on dates like Jul-1976 and I don't know why 
-			
+
 			if hyphenReplace:
 				dateGuess = dateGuess.replace("/","-")
 			
@@ -92,11 +96,11 @@ def getDataInfo(fileObj):
 
 	return {"offset":offset,"headers":headers,"types":types,"splitDates":[dayPos,monthPos,yearPos]}
 
-def makeDataFrame(fileObj):
+def _makeDataFrame(fileObj):
 
 	# Get the headers and more detailed information about column types
 
-	fileInfo = getDataInfo(fileObj)
+	fileInfo = _getDataInfo(fileObj)
 
 	# Work out which ones are columns with a proper date
 
@@ -105,9 +109,6 @@ def makeDataFrame(fileObj):
 	for i, colType in enumerate(fileInfo['types']):
 		if "Date" in str(colType):
 			dateColumns.append(i)
-
-	# print dateColumns		
-	print fileInfo['types']
 
 	# Read the CSV into a pandas dataframe
 
@@ -118,12 +119,9 @@ def makeDataFrame(fileObj):
 	if dateColumns:
 		for i in dateColumns:
 			dateFormat = str(fileInfo['types'][i]).split("(")[1].split(")")[0]
-			print dateFormat
 			df[df.columns[i]] = pd.to_datetime(df[df.columns[i]], format=dateFormat) 
 
 	# check if there is day, month, year in seperate columns and parse if so
-
-	print fileInfo['splitDates']
 
 	if fileInfo['splitDates'][0] and fileInfo['splitDates'][1] and fileInfo['splitDates'][2]:
 
@@ -139,39 +137,22 @@ def makeDataFrame(fileObj):
                           datetime.strptime(str(row[dayHeader]) + "-" + str(row[monthHeader]) + "-" + str(row[yearHeader]), dateFormat).isoformat(' '), 
                           axis=1)
 
-	return df	
+	return df
 
 def analyseAndRender(dataLocation,templateLocation):
-	compiler = Compiler()
-	df = makeDataFrame(os.path.dirname(os.getcwd()) + dataLocation)
-	print df[:10]
-	# with open(os.path.dirname(os.getcwd()) + templateLocation) as tempSource:
-	# 	template = compiler.compile(tempSource)
-
-
-# pick a column from a dataframe, check if it has increased, decreased or stayed steady
-
-def checkMovement(col,df):
-	print ""
-
-# def autoAnalyser(fileObj):
-
-
-# all of the pandas helper functions
-
-# get maximum of a column
-
-# def getMax(df,col):
 	
-# get minimum of a column
+	df = _makeDataFrame(os.path.dirname(os.getcwd()) + dataLocation)
 
-# get the top X of a column
+	with io.open(os.path.dirname(os.getcwd()) + templateLocation, 'r', encoding='utf-8') as tempSource:
+		compiler = Compiler()
+		template = compiler.compile(tempSource.read())
 
-# get the average of a column
+	helpers = {"getCell":hlp.getCell,"checkDifference":hlp.checkDifference,"checkAgainstRollingMean":hlp.checkAgainstRollingMean,"getRollingMean":hlp.getRollingMean,"getDifference":hlp.getDifference}
 
+	output = template(df,helpers=helpers)
+
+	print output
 
 # Testing locally
 
-analyseAndRender('/testdata/Labor force demo data.csv','/testdata/unemployment-template.txt')
-
-# 
+# analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')
