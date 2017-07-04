@@ -155,4 +155,4 @@ def analyseAndRender(dataLocation,templateLocation):
 
 # Testing locally
 
-# analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')
+analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')
