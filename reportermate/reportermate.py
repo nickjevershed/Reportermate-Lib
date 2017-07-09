@@ -7,6 +7,7 @@ import os
 from datetime import datetime
 from pybars import Compiler
 import io
+import global_stuff as g
 import helpers as hlp
 
 # Helper function for strings
@@ -112,14 +113,14 @@ def _makeDataFrame(fileObj):
 
 	# Read the CSV into a pandas dataframe
 
-	df = pd.read_csv(fileObj)
+	newDf = pd.read_csv(fileObj)
 
 	# Parse any dates in place that need to be parsed
 
 	if dateColumns:
 		for i in dateColumns:
 			dateFormat = str(fileInfo['types'][i]).split("(")[1].split(")")[0]
-			df[df.columns[i]] = pd.to_datetime(df[df.columns[i]], format=dateFormat) 
+			newDf[newDf.columns[i]] = pd.to_datetime(newDf[newDf.columns[i]], format=dateFormat) 
 
 	# check if there is day, month, year in seperate columns and parse if so
 
@@ -129,27 +130,26 @@ def _makeDataFrame(fileObj):
 		
 		print dateFormat
 
-		dayHeader = list(df)[fileInfo['splitDates'][0]]
-		monthHeader = list(df)[fileInfo['splitDates'][1]]
-		yearHeader = list(df)[fileInfo['splitDates'][2]]
+		dayHeader = list(newDf)[fileInfo['splitDates'][0]]
+		monthHeader = list(newDf)[fileInfo['splitDates'][1]]
+		yearHeader = list(newDf)[fileInfo['splitDates'][2]]
 
-		df['newDate'] = df.apply(lambda row :
+		newDf['newDate'] = newDf.apply(lambda row :
                           datetime.strptime(str(row[dayHeader]) + "-" + str(row[monthHeader]) + "-" + str(row[yearHeader]), dateFormat).isoformat(' '), 
                           axis=1)
 
-	return df
+	return newDf
 
 def analyseAndRender(dataLocation,templateLocation):
-	
-	df = _makeDataFrame(dataLocation)
+	g.df = _makeDataFrame(dataLocation)
 
 	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
 		compiler = Compiler()
 		template = compiler.compile(tempSource.read())
 
-	helpers = {"getCell":hlp.getCell,"checkDifference":hlp.checkDifference,"checkAgainstRollingMean":hlp.checkAgainstRollingMean,"getRollingMean":hlp.getRollingMean,"getDifference":hlp.getDifference}
+	helpers = {"getCell":hlp.getCell,"checkDifference":hlp.checkDifference,"checkAgainstRollingMean":hlp.checkAgainstRollingMean,"getRollingMean":hlp.getRollingMean,"getDifference":hlp.getDifference,"sortAscending":hlp.sortAscending,"sortDescending":hlp.sortDescending,"getRankedItemDescending":hlp.getRankedItemDescending,"sumAllCols":hlp.sumAllCols,"testParent":hlp.testParent,"testChild":hlp.testChild}
 
-	output = template(df,helpers=helpers)
+	output = template(g.df,helpers=helpers)
 
 	print output
 

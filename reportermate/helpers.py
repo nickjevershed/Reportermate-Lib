@@ -1,4 +1,8 @@
-# helper functions for rendering
+import global_stuff as g
+
+# helper functions
+
+# Just formats a number nicely
 
 def formatNumber(num):
 	if num % 1 != 0:
@@ -6,8 +10,50 @@ def formatNumber(num):
 	else:	
 		return "{0:,.0f}".format(num)
 
-def getCell(df, col, row):
-	return formatNumber(df[col].iloc[row])
+# Get a specific cell from a dataframe given a dataframe, row and column
+
+def getCell(con, col, row):
+	return g.df[col].iloc[row]
+
+def sortAscending(sortby):
+	result = g.df.sort_values(sortby, True)
+	return result
+
+def sortDescending(sortby):
+	result = g.df.sort_values(sortby,ascending=False)
+	return result
+
+def getRankedItemDescending(con, col, sortby, row):
+	sortedDf = sortDescending(sortby)
+	return sortedDf[col].iloc[row]
+
+def getRankedItemAscending(con, col, sortby, row):
+	sortedDf = sortAscending(sortby)
+	return getCell(sortedDf, col, row)
+
+def sumAllCols(df):
+	totalColName = 'total'
+	newDf = g.df
+	if 'total' in newDf:
+		totalColName = 'newTotal'
+	newDf[totalColName] = newDf.sum(axis=1)
+	return newDf
+
+def testParent(df,blah):
+	return blah['Name'].iloc[0]
+
+def testChild(df,foo):
+	df['total'] = 100
+	return df['total'].iloc[0]
+
+def sumSpecificCols(df,cols):
+	totalColName = 'total'
+	
+	if 'total' in df.columns:
+		totalColName = 'newTotal'
+	
+	df[totalColName] = df[cols].sum(axis=1)	
+	return df
 
 def checkDifference(df, col, row1, row2):
 	val1 = df[col].iloc[row1]
@@ -40,3 +86,7 @@ def getDifference(df, col, row1, row2):
 	val1 = df[col].iloc[row1]
 	val2 = df[col].iloc[row2]
 	return formatNumber(val1 - val2)
+
+
+
+
