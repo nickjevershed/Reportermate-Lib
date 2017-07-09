@@ -6,6 +6,7 @@ import dateinfer
 import os
 from datetime import datetime
 from pybars import Compiler
+import simplejson as json
 import io
 import global_stuff as g
 import helpers as hlp
@@ -140,7 +141,15 @@ def _makeDataFrame(fileObj):
 
 	return newDf
 
-def analyseAndRender(dataLocation,templateLocation):
+def _replaceStrings(replacements,output):
+	for replacement in replacements:
+		key, value = replacement.items()[0]
+		output = output.replace(key, value)
+
+	return output
+
+
+def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 	g.df = _makeDataFrame(dataLocation)
 
 	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
@@ -151,8 +160,12 @@ def analyseAndRender(dataLocation,templateLocation):
 
 	output = template(g.df,helpers=helpers)
 
+	if replaceLocation != "":
+		with open(replaceLocation) as json_file:
+			replacements = json.load(json_file)
+
+		output = _replaceStrings(replacements, output)
+
+		
+
 	print output
-
-# Testing locally
-
-# analyseAndRender('/testdata/Labor force demo data.csv','/testdata/test.txt')

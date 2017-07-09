@@ -1,4 +1,3 @@
-# Makes the original datframe available across modules, as otherwise
-# so the PyBars templates can calculate totals etc
+# Makes the original dataframe available across modules, as otherwise the PyBars templates can't calculate totals etc
 
 df = None

@@ -1,0 +1,2 @@
+<p>Australia's emissions have {{checkDifference col='nggiPlusProjections' row1=-1 row2=-2}} to {{getCell col='nggiPlusProjections' row=-1}}.</p>
+<p>This is {{checkAgainstRollingMean col='nggiPlusProjections' row=-1 length=8}} the average of the past two years of emissions</p>

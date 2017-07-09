@@ -1,0 +1,4 @@
+<p>Getting an arbitrary value {{getCell col='Name' row=0}}.</p>
+<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
+<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
+<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
