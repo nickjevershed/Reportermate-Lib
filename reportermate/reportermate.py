@@ -166,6 +166,4 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 
 		output = _replaceStrings(replacements, output)
 
-		
-
 	print output
