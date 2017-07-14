@@ -4,16 +4,26 @@ import global_stuff as g
 
 # Just formats a number nicely
 
-def formatNumber(num):
-	if num % 1 != 0:
-		return "{0:,.1f}".format(num)
-	else:	
-		return "{0:,.0f}".format(num)
+def formatNumber(con, num):
+	if num >= 1000000:
+		num = num / 1000000
+		if num % 1 != 0:
+			return "{0:,.1f}".format(num) + "m"
+		else:	
+			return "{0:,.0f}".format(num) + "m"
+	else:		
+		if num % 1 != 0:
+			return "{0:,.1f}".format(num)
+		else:	
+			return "{0:,.0f}".format(num)
 
 # Get a specific cell from a dataframe given a dataframe, row and column
 
 def getCell(con, col, row):
 	return g.df[col].iloc[row]
+
+def getColByRowValue(con, col1, value, col2):
+	return df[df[col1] == value][col2].iloc[0]		
 
 def sortAscending(sortby):
 	result = g.df.sort_values(sortby, True)
@@ -31,13 +41,21 @@ def getRankedItemAscending(con, col, sortby, row):
 	sortedDf = sortAscending(sortby)
 	return getCell(sortedDf, col, row)
 
-def sumAllCols(df):
+def sumAllCols():
 	totalColName = 'total'
 	newDf = g.df
 	if 'total' in newDf:
 		totalColName = 'newTotal'
 	newDf[totalColName] = newDf.sum(axis=1)
 	return newDf
+
+def totalSumOfAllCols(con):
+	totalColName = 'total'
+	newDf = g.df
+	if 'total' in newDf:
+		totalColName = 'newTotal'
+	newDf[totalColName] = newDf.sum(axis=1)
+	return newDf[totalColName].sum()
 
 def testParent(df,blah):
 	return blah['Name'].iloc[0]

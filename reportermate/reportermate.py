@@ -156,7 +156,7 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		compiler = Compiler()
 		template = compiler.compile(tempSource.read())
 
-	helpers = {"getCell":hlp.getCell,"checkDifference":hlp.checkDifference,"checkAgainstRollingMean":hlp.checkAgainstRollingMean,"getRollingMean":hlp.getRollingMean,"getDifference":hlp.getDifference,"sortAscending":hlp.sortAscending,"sortDescending":hlp.sortDescending,"getRankedItemDescending":hlp.getRankedItemDescending,"sumAllCols":hlp.sumAllCols,"testParent":hlp.testParent,"testChild":hlp.testChild}
+	helpers = {"getCell":hlp.getCell,"checkDifference":hlp.checkDifference,"checkAgainstRollingMean":hlp.checkAgainstRollingMean,"getRollingMean":hlp.getRollingMean,"getDifference":hlp.getDifference,"sortAscending":hlp.sortAscending,"sortDescending":hlp.sortDescending,"getRankedItemDescending":hlp.getRankedItemDescending,"sumAllCols":hlp.sumAllCols,"testParent":hlp.testParent,"testChild":hlp.testChild,"totalSumOfAllCols":hlp.totalSumOfAllCols,"formatNumber":hlp.formatNumber}
 
 	output = template(g.df,helpers=helpers)
 

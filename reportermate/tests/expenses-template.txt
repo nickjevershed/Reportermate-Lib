@@ -1,4 +1,3 @@
-<p>Getting an arbitrary value {{getCell col='Name' row=0}}.</p>
-<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
-<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
-<p>The biggest spender for all political expenses was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}</p>
+<p>Australia's politicians spent a total of ${{formatNumber (totalSumOfAllCols) }} on travel and other expenses, according to recently published figures.</p>
+<p>The biggest spender for the travel allowance category was {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=0}}, followed by {{getRankedItemDescending col="Name" sortby="Travelling Allowance" row=1}}</p>
+<p>{{getRankedItemDescending col="Name" sortby="Family Travel Costs" row=0}} claimed the most for family travel costs, spending ${{formatNumber (getRankedItemDescending col="Family Travel Costs" sortby="Family Travel Costs" row=0)}}.</p>
