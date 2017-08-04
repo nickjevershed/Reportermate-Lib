@@ -1,11 +1,8 @@
 import os
 from setuptools import setup
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
-
 
 setup(name='reportermate',
-      version='0.2',
+      version='0.4.post2',
       description='Automated news stories and reports from datasets',
       long_description=open('README.rst').read(),
       classifiers=[
@@ -23,5 +20,5 @@ setup(name='reportermate',
         "console_scripts":['reportermate = reportermate.command_line:main']
         },
       packages=['reportermate'],
-      install_requires=['pandas','pybars3','messytables','dateinfer'],
+      install_requires=['pandas','pybars3','messytables','dateinfer','simplejson'],
       zip_safe=False)

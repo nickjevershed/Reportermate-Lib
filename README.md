@@ -28,6 +28,8 @@ from reportermate import analyseAndRender
 analyseAndRender(my-data.csv,my-template.txt)
 ````
 
+To see working examples and templates, check out the tests folder.
+
 Templates
 -----------
 
