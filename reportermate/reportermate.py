@@ -1,8 +1,6 @@
-#!/usr/bin/env python
-
 import pandas as pd
-import messytables as mt
 import dateinfer
+from tableschema import Table
 import os
 from datetime import datetime
 from pybars import Compiler
@@ -10,6 +8,8 @@ import simplejson as json
 import io
 import global_stuff as g
 import helpers as hlp
+
+print('yep')
 
 # Helper function for strings
 
@@ -20,26 +20,21 @@ def _cleanString(string):
 
 def _getDataInfo(fileObj):
 	
-	# Start with using messytable for headers and types
-
-	# Sample size for type detection
+	# Start with using tableschema to infer headers and types
+	table = Table(fileObj)
+	table.infer()
+	print(table.schema.descriptor)
+	headers = table.headers
+	sample = table.read(keyed=True, limit=100)
+	print(sample)
 	
-	n = 100
-	f = open(fileObj, 'rb')
-	table_set = mt.CSVTableSet(f)
-	table_set.window = n
-	row_set = table_set.tables[0]
-	offset, headers = mt.headers_guess(row_set.sample)
-	row_set.register_processor(mt.offset_processor(offset + 1))
-	types = mt.type_guess(row_set.sample, strict=True)
-
 	# If column has a date-like word in it, try getting the date format
 
 	dateHeaders = ['year','month','fy','day','period','date']
 	dateMatches = {"%a":"Day","%A":"Day","%w":"Day","%d":"Day","%-d":"Day","%b":"Month","%B":"Month","%m":"Month","%-m":"Month","%y":"Year","%Y":"Year"}
 	possibleDates = []
 
-	for i, header in enumerate(headers):
+	for i, header in enumerate(table.headers):
 		for dateString in dateHeaders:
 			if dateString == _cleanString(header):
 				possibleDates.append(i)
@@ -108,13 +103,15 @@ def _makeDataFrame(fileObj):
 
 	dateColumns = []
 
-	for i, colType in enumerate(fileInfo['types']):
-		if "Date" in str(colType):
-			dateColumns.append(i)
+	# for i, colType in enumerate(fileInfo['types']):
+	# 	if "Date" in str(colType):
+	# 		dateColumns.append(i)
 
 	# Read the CSV into a pandas dataframe
 
 	newDf = pd.read_csv(fileObj)
+
+	print(newDf.dtypes)
 
 	# Parse any dates in place that need to be parsed
 
@@ -129,7 +126,7 @@ def _makeDataFrame(fileObj):
 
 		dateFormat = str(fileInfo['types'][fileInfo['splitDates'][0]]).split("(")[1].split(")")[0] + "-" + str(fileInfo['types'][fileInfo['splitDates'][1]]).split("(")[1].split(")")[0] + "-" + str(fileInfo['types'][fileInfo['splitDates'][2]]).split("(")[1].split(")")[0]
 		
-		print dateFormat
+		print(dateFormat)
 
 		dayHeader = list(newDf)[fileInfo['splitDates'][0]]
 		monthHeader = list(newDf)[fileInfo['splitDates'][1]]
@@ -166,4 +163,7 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 
 		output = _replaceStrings(replacements, output)
 
-	print output
+	print(output)
+	return output	
+
+analyseAndRender('tests/unemployment.csv', 'tests/unemployment-template.txt')

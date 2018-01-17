@@ -25,21 +25,31 @@ def getCell(con, col, row):
 def getColByRowValue(con, col1, value, col2):
 	return df[df[col1] == value][col2].iloc[0]		
 
+# Sorts dataframe based on a given column name in ascending order
+
 def sortAscending(sortby):
 	result = g.df.sort_values(sortby, True)
 	return result
+
+# Sorts dataframe based on a given column name in ascending order, then gets the nth cell value for a given column
+
+def getRankedItemAscending(con, col, sortby, row):
+	sortedDf = sortAscending(sortby)
+	return getCell(sortedDf, col, row)
+
+# Sorts dataframe based on a given column name in descending order
 
 def sortDescending(sortby):
 	result = g.df.sort_values(sortby,ascending=False)
 	return result
 
+# Sorts dataframe based on a given column name in descending order, then gets the nth cell value for a given column
+
 def getRankedItemDescending(con, col, sortby, row):
 	sortedDf = sortDescending(sortby)
 	return sortedDf[col].iloc[row]
 
-def getRankedItemAscending(con, col, sortby, row):
-	sortedDf = sortAscending(sortby)
-	return getCell(sortedDf, col, row)
+# Sums values across rows, creates a new column named total. Note - probably breaks if a total column already exists
 
 def sumAllCols():
 	totalColName = 'total'
@@ -49,6 +59,8 @@ def sumAllCols():
 	newDf[totalColName] = newDf.sum(axis=1)
 	return newDf
 
+# Sum of the total column
+
 def totalSumOfAllCols(con):
 	totalColName = 'total'
 	newDf = g.df
@@ -57,12 +69,12 @@ def totalSumOfAllCols(con):
 	newDf[totalColName] = newDf.sum(axis=1)
 	return newDf[totalColName].sum()
 
-def testParent(df,blah):
-	return blah['Name'].iloc[0]
+# def testParent(df,blah):
+# 	return blah['Name'].iloc[0]
 
-def testChild(df,foo):
-	df['total'] = 100
-	return df['total'].iloc[0]
+# def testChild(df,foo):
+# 	df['total'] = 100
+# 	return df['total'].iloc[0]
 
 def sumSpecificCols(df,cols):
 	totalColName = 'total'
@@ -103,7 +115,7 @@ def getRollingMean(df, col, length):
 def getDifference(df, col, row1, row2):
 	val1 = df[col].iloc[row1]
 	val2 = df[col].iloc[row2]
-	return formatNumber(val1 - val2)
+	return val1 - val2
 
 
 

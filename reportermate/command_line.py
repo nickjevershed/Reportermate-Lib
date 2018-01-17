@@ -8,4 +8,6 @@ parser.add_argument("replacements",nargs='?', help="A json file with key-value p
 args = parser.parse_args()
 
 def main():
-	analyseAndRender(args.data, args.template, args.replacements)
+	output = analyseAndRender(args.data, args.template, args.replacements)
+	with open("story.txt", "w") as f:
+		f.write(output)
