@@ -1,2 +1,2 @@
 import argparse
-from reportermate import analyseAndRender
+from .reportermate import analyseAndRender
