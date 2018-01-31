@@ -1,0 +1,7 @@
+Australian political parties declared donations worth ${{formatNumber (summariseCol ds=(filterBy ds='default' cols='ReceiptTyDs,period' filterByThis='Donation,2015-2016') col='AmountReceived' operator='sum')}} in the 2016-17 financial year, according to the latest figures from the Australian Electoral Commission.
+
+The total sum of all donations was {{totalSumOfAllCols}}.
+
+The biggest donation was made by {{getRankedItemDescending ds='default' col='PayerClientNm' sortBy='AmountReceived' row=1}}
+
+The party with the most donations was {{filterBy ds=(groupBy ds='default' groupByThis='partyGroup,ReceiptTyDs' operator='sum') cols='ReceiptTyDs' filterByThis='Donation' }}.

@@ -31,7 +31,7 @@ def _getDataInfo(fileObj):
 	
 	# If column has a date-like word in it, try getting the date format
 
-	dateHeaders = ['year','month','fy','day','period','date']
+	dateHeaders = ['year','month','fy','day','date']
 	dateMatches = {"%a":"Day","%A":"Day","%w":"Day","%d":"Day","%-d":"Day","%b":"Month","%B":"Month","%m":"Month","%-m":"Month","%y":"Year","%Y":"Year"}
 	
 	possibleDates = []
@@ -115,7 +115,7 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		compiler = Compiler()
 		template = compiler.compile(tempSource.read())
 
-	helpers = {"getCell":_hlp.getCell,"checkDifference":_hlp.checkDifference,"checkAgainstRollingMean":_hlp.checkAgainstRollingMean,"getRollingMean":_hlp.getRollingMean,"getDifference":_hlp.getDifference,"sortAscending":_hlp.sortAscending,"sortDescending":_hlp.sortDescending,"getRankedItemDescending":_hlp.getRankedItemDescending,"sumAllCols":_hlp.sumAllCols,"testParent":_hlp.testParent,"testChild":_hlp.testChild,"totalSumOfAllCols":_hlp.totalSumOfAllCols,"formatNumber":_hlp.formatNumber}
+	helpers = {"getCell":getCell,"checkDifference":checkDifference,"checkAgainstRollingMean":checkAgainstRollingMean,"getRollingMean":getRollingMean,"getDifference":getDifference,"sortAscending":sortAscending,"sortDescending":sortDescending,"getRankedItemDescending":getRankedItemDescending,"sumAcrossAllCols":sumAcrossAllCols,"testParent":testParent,"testChild":testChild,"totalSumOfAllCols":totalSumOfAllCols,"formatNumber":formatNumber,"groupBy":groupBy,"filterBy":filterBy,"summariseCol":summariseCol}
 
 	output = template(df,helpers=helpers)
 
@@ -128,122 +128,172 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 	print(output)
 	return output	
 
+def _getCurrentDataframe(ds):
+	if type(ds) is str:
+		return df
+	else:
+		return ds
+			
 # All the helper functions required to run pandas functions on the data from the template
 
-class _hlp():
+def formatNumber(con, num):
+	if num >= 1000000:
+		num = num / 1000000
+		if num % 1 != 0:
+			return "{0:,.1f}".format(num) + "m"
+		else:	
+			return "{0:,.0f}".format(num) + "m"
+	else:		
+		if num % 1 != 0:
+			return "{0:,.1f}".format(num)
+		else:	
+			return "{0:,.0f}".format(num)
 
-	def formatNumber(con, num):
-		if num >= 1000000:
-			num = num / 1000000
-			if num % 1 != 0:
-				return "{0:,.1f}".format(num) + "m"
-			else:	
-				return "{0:,.0f}".format(num) + "m"
-		else:		
-			if num % 1 != 0:
-				return "{0:,.1f}".format(num)
-			else:	
-				return "{0:,.0f}".format(num)
+# Get a specific cell from a dataframe given a dataframe, row and column
 
-	# Get a specific cell from a dataframe given a dataframe, row and column
+def getCell(con, col, row):
+	return df[col].iloc[row]
 
-	def getCell(con, col, row):
-		return df[col].iloc[row]
+def getColByRowValue(con, col1, value, col2):
+	return df[df[col1] == value][col2].iloc[0]		
 
-	def getColByRowValue(con, col1, value, col2):
-		return df[df[col1] == value][col2].iloc[0]		
+# Sorts dataframe based on a given column name in ascending order
 
-	# Sorts dataframe based on a given column name in ascending order
+def sortAscending(sortby):
+	result = df.sort_values(sortby, True)
+	return result
 
-	def sortAscending(sortby):
-		result = df.sort_values(sortby, True)
+# Sorts dataframe based on a given column name in ascending order, then gets the nth cell value for a given column
+
+def getRankedItemAscending(con, col, sortby, row):
+	sortedDf = sortAscending(sortby)
+	return getCell(sortedDf, col, row)
+
+# Sorts dataframe based on a given column name in descending order
+
+def sortDescending(sortby):
+	result = df.sort_values(sortby,ascending=False)
+	return result
+
+# Sorts dataframe based on a given column name in descending order, then gets the nth cell value for a given column
+
+def getRankedItemDescending(con, ds, col, sortBy, row):
+	currDf = _getCurrentDataframe(ds)
+	sortedDf = currDf.sort_values(sortBy,ascending=False)
+	result = sortedDf[col].iloc[row]
+	return result
+
+# Does maths on a specific column, eg sum, mean, count, mode
+
+def summariseCol(con,ds,col,operator):
+	currDf = _getCurrentDataframe(ds)
+	result = getattr(currDf[col], operator)()
+	return result
+
+# Sums values across rows, creates a new column named total. Note - probably breaks if a total column already exists
+
+def sumAcrossAllCols():
+	totalColName = 'total'
+	newDf = df
+	if 'total' in newDf:
+		totalColName = 'newTotal'
+	newDf[totalColName] = newDf.sum(axis=1)
+	return newDf
+
+# Sum of the total column
+
+def totalSumOfAllCols(con):
+	totalColName = 'total'
+	newDf = df
+	if 'total' in newDf:
+		totalColName = 'newTotal'
+	newDf[totalColName] = newDf.sum(axis=1)
+	return newDf[totalColName].sum()
+
+def testParent(df,blah):
+	return blah['Name'].iloc[0]
+
+def testChild(df,foo):
+	df['total'] = 100
+	return df['total'].iloc[0]
+
+def sumAcrossSpecificCols(con, ds, cols):
+	totalColName = 'total'
+	
+	if 'total' in df.columns:
+		totalColName = 'newTotal'
+	
+	df[totalColName] = df[cols].sum(axis=1)	
+	return df
+
+def checkDifference(con, col, row1, row2):
+	val1 = df[col].iloc[row1]
+	val2 = df[col].iloc[row2]
+	
+	if val1 > val2:
+		return "increased"
+
+	if val1 < val2:
+		return "decreased"
+
+	if val1 == val2:
+		return "stayed steady"
+
+def checkAgainstRollingMean(con, col, row, length):
+	val = df[col].iloc[row]
+	mean = df[col].rolling(window=length).mean().iloc[-1]
+	if val > mean:
+		return "higher than"
+	if val < mean:
+		return "lower than"
+	if val == mean:
+		return "the same as"	
+
+def getRollingMean(con, col, length):
+	mean = df[col].rolling(window=length).mean().iloc[-1]
+	return mean
+
+def getDifference(con, col, row1, row2):
+	val1 = df[col].iloc[row1]
+	val2 = df[col].iloc[row2]
+	return val1 - val2
+
+def groupBy(con, ds, groupByThis, operator):
+	currDf = _getCurrentDataframe(ds)
+
+	if "," in groupByThis:
+		groupByThis = groupByThis.split(",")
+	else:
+		groupByThis = [groupByThis]	
+	
+	dg = currDf.groupby(groupByThis, as_index=False)
+	result = getattr(dg, operator)()
+	return result
+
+def filterBy(con, ds, cols, filterByThis):
+	currDf = _getCurrentDataframe(ds)
+
+	# For multi-column filtering
+
+	if "," in filterByThis:
+		filterByThis = filterByThis.split(",")
+		cols = cols.split(",")
+
+		queryStr = ''
+		for i in range(0, len(cols)):
+			join = ' and '
+			if i == len(cols) - 1:
+				join = ''
+			queryStr = queryStr + cols[i] + ' == "' + filterByThis[i] + '"' + join
+
+		print queryStr	
+
+		result = currDf.query(queryStr)
 		return result
 
-	# Sorts dataframe based on a given column name in ascending order, then gets the nth cell value for a given column
-
-	def getRankedItemAscending(con, col, sortby, row):
-		sortedDf = sortAscending(sortby)
-		return getCell(sortedDf, col, row)
-
-	# Sorts dataframe based on a given column name in descending order
-
-	def sortDescending(sortby):
-		result = df.sort_values(sortby,ascending=False)
-		return result
-
-	# Sorts dataframe based on a given column name in descending order, then gets the nth cell value for a given column
-
-	def getRankedItemDescending(con, col, sortby, row):
-		sortedDf = sortDescending(sortby)
-		return sortedDf[col].iloc[row]
-
-	# Sums values across rows, creates a new column named total. Note - probably breaks if a total column already exists
-
-	def sumAllCols():
-		totalColName = 'total'
-		newDf = df
-		if 'total' in newDf:
-			totalColName = 'newTotal'
-		newDf[totalColName] = newDf.sum(axis=1)
-		return newDf
-
-	# Sum of the total column
-
-	def totalSumOfAllCols(con):
-		totalColName = 'total'
-		newDf = df
-		if 'total' in newDf:
-			totalColName = 'newTotal'
-		newDf[totalColName] = newDf.sum(axis=1)
-		return newDf[totalColName].sum()
-
-	def testParent(df,blah):
-		return blah['Name'].iloc[0]
-
-	def testChild(df,foo):
-		df['total'] = 100
-		return df['total'].iloc[0]
-
-	def sumSpecificCols(df,cols):
-		totalColName = 'total'
+	# For single column filtering
 		
-		if 'total' in df.columns:
-			totalColName = 'newTotal'
-		
-		df[totalColName] = df[cols].sum(axis=1)	
-		return df
-
-	def checkDifference(df, col, row1, row2):
-		val1 = df[col].iloc[row1]
-		val2 = df[col].iloc[row2]
-		
-		if val1 > val2:
-			return "increased"
-
-		if val1 < val2:
-			return "decreased"
-
-		if val1 == val2:
-			return "stayed steady"
-
-	def checkAgainstRollingMean(df, col, row, length):
-		val = df[col].iloc[row]
-		mean = df[col].rolling(window=length).mean().iloc[-1]
-		if val > mean:
-			return "higher than"
-		if val < mean:
-			return "lower than"
-		if val == mean:
-			return "the same as"	
-
-	def getRollingMean(df, col, length):
-		mean = df[col].rolling(window=length).mean().iloc[-1]
-		return mean
-
-	def getDifference(df, col, row1, row2):
-		val1 = df[col].iloc[row1]
-		val2 = df[col].iloc[row2]
-		return val1 - val2
-
-# end _hlp
+	else:
+		result = currDf.loc[currDf[cols] == filterByThis]
+		return result	
 

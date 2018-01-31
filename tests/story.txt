@@ -1,0 +1,11 @@
+Australian political parties declared donations worth $29m in the 2016-17 financial year, according to the latest figures from the Australian Electoral Commission.
+
+The total sum of all donations was 729517145.0.
+
+The biggest donation was made by Australian Electoral Commission
+
+The party with the most donations was    partyGroup ReceiptTyDs  PayerPostcode  AmountReceived       total
+0         ALP    Donation      5566466.0        61690692  67257158.0
+4         GRN    Donation       411607.0         8597853   9009460.0
+8         LIB    Donation      3275358.0        93529763  96805121.0
+11        NAT    Donation       345959.0         5104386   5450345.0.
