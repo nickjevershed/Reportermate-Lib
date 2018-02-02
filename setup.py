@@ -2,7 +2,7 @@ import os
 from setuptools import setup
 
 setup(name='reportermate',
-      version='0.4.post2',
+      version='0.5.1',
       description='Automated news stories and reports from datasets',
       long_description=open('README.rst').read(),
       classifiers=[

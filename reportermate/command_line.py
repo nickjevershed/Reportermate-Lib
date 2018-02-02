@@ -1,4 +1,5 @@
 import argparse
+import codecs
 from reportermate import analyseAndRender
 
 parser = argparse.ArgumentParser()
@@ -9,5 +10,6 @@ args = parser.parse_args()
 
 def main():
 	output = analyseAndRender(args.data, args.template, args.replacements)
-	with open("story.txt", "w") as f:
+	print(output)
+	with codecs.open("story.txt", "w", encoding='utf8') as f:
 		f.write(output)

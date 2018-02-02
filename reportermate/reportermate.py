@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 import dateinfer	
 from tableschema import Table
@@ -9,7 +11,6 @@ import io
 # import global_stuff as g
 # import helpers as _hlp
 
-print('yep')
 df = None
 
 # Helper function for strings
@@ -24,10 +25,8 @@ def _getDataInfo(fileObj):
 	# Start with using tableschema to infer headers and types
 	table = Table(fileObj)
 	table.infer()
-	print(table.schema.descriptor)
 	headers = table.headers
 	sample = table.read(limit=100)
-	print(sample[:10])
 	
 	# If column has a date-like word in it, try getting the date format
 
@@ -39,7 +38,7 @@ def _getDataInfo(fileObj):
 	for i, header in enumerate(table.headers):
 		for dateString in dateHeaders:
 			if dateString == _cleanString(header):
-				print("Possible date column:", header)
+				# print("Possible date column:", header)
 				possibleDates.append(i)
 	
 	dateColumns = []
@@ -61,7 +60,7 @@ def _getDataInfo(fileObj):
 			dateGuess = dateinfer.infer(dateSample).replace("%M","%y")  # hack to stop years showing as minutes
 			
 			# For single days, months and years	
-			print(dateGuess)
+			# print(dateGuess)
 			
 			# Work around because dateinfer breaks on dates like Jul-1976 and I don't know why 
 
@@ -86,7 +85,7 @@ def _makeDataFrame(fileObj):
 
 	newDf = pd.read_csv(fileObj)
 
-	print(newDf.dtypes)
+	# print(newDf.dtypes)
 
 	# Parse any dates in place that need to be parsed
 
@@ -100,8 +99,8 @@ def _makeDataFrame(fileObj):
 
 def _replaceStrings(replacements,output):
 	for replacement in replacements:
-		key, value = replacement.items()[0]
-		output = output.replace(key, value)
+		for key, value in replacement.items():
+			output = output.replace(key, value)
 
 	return output
 
@@ -115,7 +114,24 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		compiler = Compiler()
 		template = compiler.compile(tempSource.read())
 
-	helpers = {"getCell":getCell,"checkDifference":checkDifference,"checkAgainstRollingMean":checkAgainstRollingMean,"getRollingMean":getRollingMean,"getDifference":getDifference,"sortAscending":sortAscending,"sortDescending":sortDescending,"getRankedItemDescending":getRankedItemDescending,"sumAcrossAllCols":sumAcrossAllCols,"testParent":testParent,"testChild":testChild,"totalSumOfAllCols":totalSumOfAllCols,"formatNumber":formatNumber,"groupBy":groupBy,"filterBy":filterBy,"summariseCol":summariseCol}
+	helpers = {
+		"getCell":getCell,
+		"checkDifferenceBetweenValues":checkDifferenceBetweenValues,
+		"checkAgainstRollingMean":checkAgainstRollingMean,
+		"getRollingMean":getRollingMean,
+		"getDifference":getDifference,
+		"sortAscending":sortAscending,
+		"sortDescending":sortDescending,
+		"getRankedItemDescending":getRankedItemDescending,
+		"sumAcrossAllCols":sumAcrossAllCols,
+		"totalSumOfAllCols":totalSumOfAllCols,
+		"formatNumber":formatNumber,
+		"groupBy":groupBy,
+		"filterBy":filterBy,
+		"summariseCol":summariseCol,
+		"checkDifferenceBetweenResults":checkDifferenceBetweenResults,
+		"uniqueValues":uniqueValues
+		}
 
 	output = template(df,helpers=helpers)
 
@@ -125,7 +141,7 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 
 		output = _replaceStrings(replacements, output)
 
-	print(output)
+	# print(output.encode('utf-8'))
 	return output	
 
 def _getCurrentDataframe(ds):
@@ -138,7 +154,8 @@ def _getCurrentDataframe(ds):
 
 def formatNumber(con, num):
 	if num >= 1000000:
-		num = num / 1000000
+		num = num / 1000000.0
+
 		if num % 1 != 0:
 			return "{0:,.1f}".format(num) + "m"
 		else:	
@@ -151,28 +168,32 @@ def formatNumber(con, num):
 
 # Get a specific cell from a dataframe given a dataframe, row and column
 
-def getCell(con, col, row):
-	return df[col].iloc[row]
+def getCell(con, ds, col, row):
+	currDf = _getCurrentDataframe(ds)
+	return currDf[col].iloc[row]
 
-def getColByRowValue(con, col1, value, col2):
-	return df[df[col1] == value][col2].iloc[0]		
+def getColByRowValue(con, ds, col1, value, col2):
+	currDf = _getCurrentDataframe(ds)
+	return currDf[currDf[col1] == value][col2].iloc[0]		
 
 # Sorts dataframe based on a given column name in ascending order
 
-def sortAscending(sortby):
-	result = df.sort_values(sortby, True)
+def sortAscending(con, ds, sortBy):
+	result = ds.sort_values(sortBy, True)
 	return result
 
 # Sorts dataframe based on a given column name in ascending order, then gets the nth cell value for a given column
 
-def getRankedItemAscending(con, col, sortby, row):
-	sortedDf = sortAscending(sortby)
-	return getCell(sortedDf, col, row)
+def getRankedItemAscending(con, ds, col, sortBy, row):
+	currDf = _getCurrentDataframe(ds)
+	sortedDf = currDf.sort_values(sortBy)
+	result = getCell(sortedDf, col, row)
+	return result
 
 # Sorts dataframe based on a given column name in descending order
 
-def sortDescending(sortby):
-	result = df.sort_values(sortby,ascending=False)
+def sortDescending(con, ds, sortBy):
+	result = ds.sort_values(sortBy,ascending=False)
 	return result
 
 # Sorts dataframe based on a given column name in descending order, then gets the nth cell value for a given column
@@ -192,9 +213,10 @@ def summariseCol(con,ds,col,operator):
 
 # Sums values across rows, creates a new column named total. Note - probably breaks if a total column already exists
 
-def sumAcrossAllCols():
+def sumAcrossAllCols(con, ds):
+	currDf = _getCurrentDataframe(ds)
 	totalColName = 'total'
-	newDf = df
+	newDf = currDf
 	if 'total' in newDf:
 		totalColName = 'newTotal'
 	newDf[totalColName] = newDf.sum(axis=1)
@@ -202,20 +224,14 @@ def sumAcrossAllCols():
 
 # Sum of the total column
 
-def totalSumOfAllCols(con):
+def totalSumOfAllCols(con, ds):
+	currDf = _getCurrentDataframe(ds)
 	totalColName = 'total'
-	newDf = df
+	newDf = currDf
 	if 'total' in newDf:
 		totalColName = 'newTotal'
 	newDf[totalColName] = newDf.sum(axis=1)
 	return newDf[totalColName].sum()
-
-def testParent(df,blah):
-	return blah['Name'].iloc[0]
-
-def testChild(df,foo):
-	df['total'] = 100
-	return df['total'].iloc[0]
 
 def sumAcrossSpecificCols(con, ds, cols):
 	totalColName = 'total'
@@ -226,9 +242,11 @@ def sumAcrossSpecificCols(con, ds, cols):
 	df[totalColName] = df[cols].sum(axis=1)	
 	return df
 
-def checkDifference(con, col, row1, row2):
-	val1 = df[col].iloc[row1]
-	val2 = df[col].iloc[row2]
+def checkDifferenceBetweenValues(con, ds, col, row1, row2):
+	currDf = _getCurrentDataframe(ds)
+
+	val1 = currDf[col].iloc[row1]
+	val2 = currDf[col].iloc[row2]
 	
 	if val1 > val2:
 		return "increased"
@@ -238,6 +256,17 @@ def checkDifference(con, col, row1, row2):
 
 	if val1 == val2:
 		return "stayed steady"
+
+def checkDifferenceBetweenResults(con, val1, val2):
+
+	if val1 > val2:
+		return "higher than"
+
+	if val1 < val2:
+		return "lower than"
+
+	if val1 == val2:
+		return "the same"
 
 def checkAgainstRollingMean(con, col, row, length):
 	val = df[col].iloc[row]
@@ -270,6 +299,11 @@ def groupBy(con, ds, groupByThis, operator):
 	result = getattr(dg, operator)()
 	return result
 
+def uniqueValues(con, ds, col):
+	currDf = _getCurrentDataframe(ds)
+	result = currDf[col].nunique()
+	return result
+
 def filterBy(con, ds, cols, filterByThis):
 	currDf = _getCurrentDataframe(ds)
 
@@ -285,8 +319,6 @@ def filterBy(con, ds, cols, filterByThis):
 			if i == len(cols) - 1:
 				join = ''
 			queryStr = queryStr + cols[i] + ' == "' + filterByThis[i] + '"' + join
-
-		print queryStr	
 
 		result = currDf.query(queryStr)
 		return result
