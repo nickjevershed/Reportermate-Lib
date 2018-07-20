@@ -107,7 +107,9 @@ def _replaceStrings(replacements,output):
 # This is the main function for doing things 
 
 def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
+	
 	global df
+	
 	df = _makeDataFrame(dataLocation)
 
 	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
