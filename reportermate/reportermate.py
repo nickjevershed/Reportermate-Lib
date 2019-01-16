@@ -110,7 +110,21 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 	
 	global df
 	
-	df = _makeDataFrame(dataLocation)
+	# For local csv
+
+	if ".csv" in dataLocation and "https://docs.google.com" not in dataLocation:
+		df = _makeDataFrame(dataLocation)
+
+	# For google sheets as csv
+
+	elif "https://docs.google.com" in dataLocation:
+		print("It's a google sheet")
+
+	# If its already a dataframe
+		
+	else:
+		df = dataLocation
+
 
 	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
 		compiler = Compiler()
@@ -132,7 +146,8 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		"filterBy":filterBy,
 		"summariseCol":summariseCol,
 		"checkDifferenceBetweenResults":checkDifferenceBetweenResults,
-		"uniqueValues":uniqueValues
+		"uniqueValues":uniqueValues,
+		"summariseColByTimePeriod":summariseColByTimePeriod
 		}
 
 	output = template(df,helpers=helpers)
@@ -213,6 +228,15 @@ def summariseCol(con,ds,col,operator):
 	result = getattr(currDf[col], operator)()
 	return result
 
+# Get monthly average for a col
+
+def summariseColByTimePeriod(con,ds,dateCol,col,freq,operator):
+	currDf = _getCurrentDataframe(ds)
+	dg = currDf.groupby(currDf['date'].dt.month, as_index=False)
+	# dg = currDf.groupby(currDf[dateCol].dt[freq], as_index=False)
+	result = getattr(dg, operator)()
+	return result
+
 # Sums values across rows, creates a new column named total. Note - probably breaks if a total column already exists
 
 def sumAcrossAllCols(con, ds):
@@ -270,6 +294,8 @@ def checkDifferenceBetweenResults(con, val1, val2):
 	if val1 == val2:
 		return "the same"
 
+# Checks a cell from a column against the rolling mean of that column
+
 def checkAgainstRollingMean(con, col, row, length):
 	val = df[col].iloc[row]
 	mean = df[col].rolling(window=length).mean().iloc[-1]
@@ -280,14 +306,19 @@ def checkAgainstRollingMean(con, col, row, length):
 	if val == mean:
 		return "the same as"	
 
+# Returns the rolling mean for a defined number of periods
+
 def getRollingMean(con, col, length):
 	mean = df[col].rolling(window=length).mean().iloc[-1]
 	return mean
+
+# Returns the difference between two cells
 
 def getDifference(con, col, row1, row2):
 	val1 = df[col].iloc[row1]
 	val2 = df[col].iloc[row2]
 	return val1 - val2
+
 
 def groupBy(con, ds, groupByThis, operator):
 	currDf = _getCurrentDataframe(ds)
