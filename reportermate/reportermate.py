@@ -104,6 +104,7 @@ def _replaceStrings(replacements,output):
 
 	return output
 
+
 # This is the main function for doing things 
 
 def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
@@ -131,7 +132,8 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		template = compiler.compile(tempSource.read())
 
 	helpers = {
-		"getCell":getCell,
+		"getCellByNumber":getCellByNumber,
+		"getCellByLabel":getCellByLabel,
 		"checkDifferenceBetweenValues":checkDifferenceBetweenValues,
 		"checkAgainstRollingMean":checkAgainstRollingMean,
 		"getRollingMean":getRollingMean,
@@ -143,6 +145,7 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		"totalSumOfAllCols":totalSumOfAllCols,
 		"formatNumber":formatNumber,
 		"groupBy":groupBy,
+		"groupByTime":groupByTime,
 		"filterBy":filterBy,
 		"summariseCol":summariseCol,
 		"checkDifferenceBetweenResults":checkDifferenceBetweenResults,
@@ -167,8 +170,6 @@ def _getCurrentDataframe(ds):
 	else:
 		return ds
 			
-# All the helper functions required to run pandas functions on the data from the template
-
 def formatNumber(con, num):
 	if num >= 1000000:
 		num = num / 1000000.0
@@ -183,11 +184,21 @@ def formatNumber(con, num):
 		else:	
 			return "{0:,.0f}".format(num)
 
-# Get a specific cell from a dataframe given a dataframe, row and column
+# All the helper functions required to run pandas functions on the data from the template
 
-def getCell(con, ds, col, row):
+# Get a specific cell from a dataframe given a dataframe, column label, and row number
+
+def getCellByNumber(con, ds, col, row):
 	currDf = _getCurrentDataframe(ds)
 	return currDf[col].iloc[row]
+
+# Get a specific cell from a dataframe given a dataframe, column label, and row label
+
+def getCellByLabel(con, ds, col, row):
+	currDf = _getCurrentDataframe(ds)
+	return currDf[col].loc[row]
+
+# Get the column based on the vale of a row
 
 def getColByRowValue(con, ds, col1, value, col2):
 	currDf = _getCurrentDataframe(ds)
@@ -220,6 +231,14 @@ def getRankedItemDescending(con, ds, col, sortBy, row):
 	sortedDf = currDf.sort_values(sortBy,ascending=False)
 	result = sortedDf[col].iloc[row]
 	return result
+
+# Sorts dataframe based on a given column name in descending order, then gets the rank of a specific cell
+
+def getRankOfItemDescending(con, ds, col, sortBy, row):
+	currDf = _getCurrentDataframe(ds)
+	sortedDf = currDf.sort_values(sortBy,ascending=False)
+	result = sortedDf[col].iloc[row]
+	return result	
 
 # Does maths on a specific column, eg sum, mean, count, mode
 
@@ -268,43 +287,53 @@ def sumAcrossSpecificCols(con, ds, cols):
 	df[totalColName] = df[cols].sum(axis=1)	
 	return df
 
-def checkDifferenceBetweenValues(con, ds, col, row1, row2):
+def checkDifferenceBetweenValues(con, ds, col, row1, row2, text):
 	currDf = _getCurrentDataframe(ds)
 
 	val1 = currDf[col].iloc[row1]
 	val2 = currDf[col].iloc[row2]
-	
-	if val1 > val2:
-		return "increased"
-
-	if val1 < val2:
-		return "decreased"
-
-	if val1 == val2:
-		return "stayed steady"
-
-def checkDifferenceBetweenResults(con, val1, val2):
+	textList = text.split(",")
 
 	if val1 > val2:
-		return "higher than"
+		# eg gone up
+		return textList[0]
 
 	if val1 < val2:
-		return "lower than"
+		# eg dropped
+		return textList[1]
 
 	if val1 == val2:
-		return "the same"
+		# eg stayed the same
+		return textList[2]
+
+def checkDifferenceBetweenResults(con, val1, val2, text):
+
+	textList = text.split(",")
+
+	if val1 > val2:
+		# eg is higher than
+		return textList[0]
+
+	if val1 < val2:
+		# eg is lower than
+		return textList[1]
+
+	if val1 == val2:
+		# eg is the same
+		return textList[2]
 
 # Checks a cell from a column against the rolling mean of that column
 
-def checkAgainstRollingMean(con, col, row, length):
+def checkAgainstRollingMean(con, col, row, length, text):
+	textList = text.split(",")
 	val = df[col].iloc[row]
 	mean = df[col].rolling(window=length).mean().iloc[-1]
 	if val > mean:
-		return "higher than"
+		return textList[0]
 	if val < mean:
-		return "lower than"
+		return textList[1]
 	if val == mean:
-		return "the same as"	
+		return textList[2]	
 
 # Returns the rolling mean for a defined number of periods
 
@@ -331,6 +360,17 @@ def groupBy(con, ds, groupByThis, operator):
 	dg = currDf.groupby(groupByThis, as_index=False)
 	result = getattr(dg, operator)()
 	return result
+
+# Group by the year, month or day and return a specific month, day or year
+
+def groupByTime(con, ds, groupByThis, timePeriod, operator):
+
+	currDf = _getCurrentDataframe(ds)
+	dg = currDf.groupby(getattr(currDf[groupByThis].dt, timePeriod))
+	result = getattr(dg, operator)()
+	return result
+
+
 
 def uniqueValues(con, ds, col):
 	currDf = _getCurrentDataframe(ds)

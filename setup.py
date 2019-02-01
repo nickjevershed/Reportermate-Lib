@@ -20,5 +20,5 @@ setup(name='reportermate',
         "console_scripts":['reportermate = reportermate.command_line:main']
         },
       packages=['reportermate'],
-      install_requires=['pandas','pybars3','messytables','dateinfer','simplejson'],
+      install_requires=['pandas','pybars3','messytables','dateinfer','simplejson','tableschema'],
       zip_safe=False)

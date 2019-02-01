@@ -1,5 +1,5 @@
-Australia's unemployment rate has {{checkDifferenceBetweenValues ds='default' col='Unemployment rate - trend' row1=-1 row2=-2}} at {{getCell ds='default' col='Unemployment rate - trend' row=-1}}.
+Australia's unemployment rate has {{checkDifferenceBetweenValues ds='default' col='Unemployment rate - trend' row1=-1 row2=-2 text='increased to, decreased to, stayed steady at'}} {{getCellByNumber ds='default' col='Unemployment rate - trend' row=-1}}.
 
-This is {{checkAgainstRollingMean col='Unemployment rate - trend' row=-1 length=12}} the average unemployment rate for the year to date.
+This is {{checkAgainstRollingMean col='Unemployment rate - trend' row=-1 length=12 text='higher than, lower than, the same as'}} the average unemployment rate for the year to date.
 
-The total number of employed people {{checkDifferenceBetweenValues ds='default' col='Employed persons total - trend' row1=-1 row2=-2}} by {{checkDifferenceBetweenValues ds='default' col='Employed persons total - trend' row1=-1 row2=-2}} to {{getCell ds='default' col='Employed persons total - trend' row=-1}}
+The total number of employed people {{checkDifferenceBetweenValues ds='default' col='Employed persons total - trend' row1=-1 row2=-2 text='increased, decreased, stayed stayed'}}, with {{getCellByNumber ds='default' col='Employed persons total - trend' row=-1}} in total.
