@@ -291,6 +291,8 @@ def sumAcrossSpecificCols(con, ds, cols):
 	df[totalColName] = df[cols].sum(axis=1)	
 	return df
 
+# Evaluates the difference between two cells, and returns the corresponding text given a comma-delimited string
+
 def checkDifferenceBetweenValues(con, ds, col, row1, row2, text):
 	currDf = _getCurrentDataframe(ds)
 
@@ -352,6 +354,7 @@ def getDifference(con, col, row1, row2):
 	val2 = df[col].iloc[row2]
 	return val1 - val2
 
+# Groupby column or columns, then perform an operation on the result. eg sum by category
 
 def groupBy(con, ds, groupByThis, operator):
 	currDf = _getCurrentDataframe(ds)
@@ -386,6 +389,8 @@ def makeList(con, ds, limit=None):
 		return currDf.to_dict('records')[:limit]
 	else:
 		return currDf.to_dict('records')	
+
+# Returns a new dataframe filtered by the given value/s for the given column/s
 
 def filterBy(con, ds, cols, filterByThis):
 	currDf = _getCurrentDataframe(ds)
