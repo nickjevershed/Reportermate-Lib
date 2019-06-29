@@ -2,17 +2,17 @@ import os
 from setuptools import setup
 
 setup(name='reportermate',
-      version='0.5.1',
+      version='0.6.2',
       description='Automated news stories and reports from datasets',
       long_description=open('README.rst').read(),
       classifiers=[
-        'Development Status :: 1 - Planning',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 2',
+        'Programming Language :: Python :: 3',
         'Topic :: Scientific/Engineering :: Information Analysis',
       ],
       keywords='data-analysis text data analysis',
-      url='http://reportermate.com/',
+      url='https://github.com/nickjevershed/Reportermate-Lib',
       author='Nick Evershed',
       author_email='nick.evershed@gmail.com',
       license='MIT',
@@ -20,5 +20,5 @@ setup(name='reportermate',
         "console_scripts":['reportermate = reportermate.command_line:main']
         },
       packages=['reportermate'],
-      install_requires=['pandas','pybars3','messytables','dateinfer','simplejson','tableschema'],
+      install_requires=['pandas','pybars3','pydateinfer','simplejson'],
       zip_safe=False)

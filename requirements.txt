@@ -1,3 +1,4 @@
-pydateinfer==0.3.0
-pandas==0.22.2
-pybars3==0.9.3
+pydateinfer>=0.3.0
+pandas>=0.22.2
+pybars3>=0.9.3
+simplejson>=3.16.0

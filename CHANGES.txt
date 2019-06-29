@@ -1,0 +1,5 @@
+v0.6.1, 2019-06-29
+
+-Removed Tableschema from dependancies, now just using dateinfer for guessing dates
+-Added a new helper function makeList which adds support for {{#each}} in handlebars
+-Changed the commandline argument "replacements" to "options", which still should point to a json file. Replacements should now be under the key "replacements" in the json.

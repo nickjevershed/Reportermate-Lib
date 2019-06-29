@@ -1,2 +1,3 @@
-<p>Australia's emissions have {{checkDifference col='nggiPlusProjections' row1=-1 row2=-2}} to {{getCellByNumber col='nggiPlusProjections' row=-1}}.</p>
-<p>This is {{checkAgainstRollingMean col='nggiPlusProjections' row=-1 length=8}} the average of the past two years of emissions</p>
+Australia's emissions have {{checkDifferenceBetweenValues ds='default' col='nggiPlusProjections' row1=-1 row2=-2 text='increased to, decreased to, stayed steady at'}} to {{getCellByNumber ds='default' col='nggiPlusProjections' row=-1}} megatonnes of C02.
+
+This is {{checkAgainstRollingMean col='nggiPlusProjections' row=-1 length=8 text='higher than, lower than, the same as'}} the average of the past two years of emissions.

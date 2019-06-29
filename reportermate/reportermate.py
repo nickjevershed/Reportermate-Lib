@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
 import pandas as pd
-import dateinfer	
-from tableschema import Table
+import dateinfer
 import os
 from datetime import datetime
 from pybars import Compiler
 import simplejson as json
 import io
+import csv
+import itertools
+
 # import global_stuff as g
 # import helpers as _hlp
 
@@ -22,12 +24,14 @@ def _cleanString(string):
 
 def _getDataInfo(fileObj):
 	
-	# Start with using tableschema to infer headers and types
-	table = Table(fileObj)
-	table.infer()
-	headers = table.headers
-	sample = table.read(limit=100)
-	
+	sample = []
+
+	with open(fileObj) as csvFile:
+		reader = csv.reader(csvFile)
+		headers = next(reader)
+		for row in itertools.islice(reader, 100):
+			sample.append(row)
+
 	# If column has a date-like word in it, try getting the date format
 
 	dateHeaders = ['year','month','fy','day','date']
@@ -35,7 +39,7 @@ def _getDataInfo(fileObj):
 	
 	possibleDates = []
 
-	for i, header in enumerate(table.headers):
+	for i, header in enumerate(headers):
 		for dateString in dateHeaders:
 			if dateString == _cleanString(header):
 				# print("Possible date column:", header)
@@ -46,9 +50,8 @@ def _getDataInfo(fileObj):
 	if possibleDates:
 		hyphenReplace = False
 		for colIndex in possibleDates:
-			dateSample = []
+			dateSample = []		
 			for row in sample:
-				
 				# Work around because dateinfer breaks on dates like Jul-1976 and I don't know why 
 
 				if "-" in row[colIndex]:
@@ -68,8 +71,8 @@ def _getDataInfo(fileObj):
 				dateGuess = dateGuess.replace("/","-")
 
 			dateColumns.append({"index":colIndex,"format":dateGuess})
-	
-	return {"tableschema":table.schema.descriptor,"dateColumns":dateColumns}
+
+	return {"dateColumns":dateColumns}
 
 def _makeDataFrame(fileObj):
 
@@ -104,13 +107,15 @@ def _replaceStrings(replacements,output):
 
 	return output
 
-
 # This is the main function for doing things 
 
-def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
-	
+def analyseAndRender(dataLocation,templateLocation,optionsLocation=""):
 	global df
 	
+	if optionsLocation != "":
+		with open(optionsLocation) as json_file:
+			options = json.load(json_file)
+
 	# For local csv
 
 	if ".csv" in dataLocation and "https://docs.google.com" not in dataLocation:
@@ -125,7 +130,6 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		
 	else:
 		df = dataLocation
-
 
 	with io.open(templateLocation, 'r', encoding='utf-8') as tempSource:
 		compiler = Compiler()
@@ -150,16 +154,16 @@ def analyseAndRender(dataLocation,templateLocation,replaceLocation=""):
 		"summariseCol":summariseCol,
 		"checkDifferenceBetweenResults":checkDifferenceBetweenResults,
 		"uniqueValues":uniqueValues,
-		"summariseColByTimePeriod":summariseColByTimePeriod
+		"summariseColByTimePeriod":summariseColByTimePeriod,
+		"makeList":makeList
 		}
 
 	output = template(df,helpers=helpers)
 
-	if replaceLocation != "":
-		with open(replaceLocation) as json_file:
-			replacements = json.load(json_file)
-
-		output = _replaceStrings(replacements, output)
+	# String replacements
+	if optionsLocation != "":
+		if 'replacements' in options:
+			output = _replaceStrings(options['replacements'], output)
 
 	# print(output.encode('utf-8'))
 	return output	
@@ -370,12 +374,18 @@ def groupByTime(con, ds, groupByThis, timePeriod, operator):
 	result = getattr(dg, operator)()
 	return result
 
-
-
 def uniqueValues(con, ds, col):
 	currDf = _getCurrentDataframe(ds)
 	result = currDf[col].nunique()
 	return result
+
+def makeList(con, ds, limit=None):
+
+	currDf = _getCurrentDataframe(ds)
+	if limit != None:
+		return currDf.to_dict('records')[:limit]
+	else:
+		return currDf.to_dict('records')	
 
 def filterBy(con, ds, cols, filterByThis):
 	currDf = _getCurrentDataframe(ds)
